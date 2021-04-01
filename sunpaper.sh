@@ -168,6 +168,17 @@ wallpaperModeOguri="fill"
 
 
 #################################################
+# Animate MODE 
+# requires (imagemagick)
+#################################################
+# Blah blah blah smooth transitions
+#
+# enable this mode here with 
+# animate_enable="true"
+animate_enable="false"
+
+
+#################################################
 # EXTERNAL CONFIGURATION
 #################################################
 # Congratulations you've found a super secret undocumented
@@ -468,6 +479,16 @@ setpaper_construct(){
             ((c++)) && ((c==10)) && break
             sleep 1
         done
+    ################
+    # Animate
+
+    elif  [ "$animate_enable" == "true" ];then 
+
+        #TODO: Add some checks to the if above:
+        # --Cache exists (if we call create cache here it will cause a long delay. We'll need to create it earlier)
+        # --Moon/Weather mode not on (I don't think we want to create massive cache for all the weather moon combos)
+
+        animate_wallpaper
 
     else
         ################
@@ -645,6 +666,57 @@ get_weather(){
     fi
 }
 
+
+cache_transitions() {
+
+    #Temporary testing flags added:
+    # -m to generate image cache
+    # -a (1-8) to test animation
+ 
+    #TODO: Because of the time it takes to generate the initial images (5+ min)
+    # maybe cache generation script should be external and run in background? maybe it doesn't matter?
+    #TODO: The call to animate wallpaper will need to gracefully handle situations where
+    # cache_transitions hasn't finished yet.
+
+
+    #TODO: additionally name these by theme name so unique cache folder for each theme
+    # extract theme name from $wallpaperPath
+    cachePathAnimate="$cachePath/sunpaper"
+    for i in {1..8}; do
+        if [ ! -d $cachePathAnimate/$i ]; then
+            mkdir $cachePathAnimate/$i
+        fi
+
+        alpha=0
+        c=0
+        if [ $i -eq 1 ]; then
+            while [ $alpha -le 100 ]; do
+                alpha=$(( alpha + 5 ))
+                c=$(( c + 1 ))
+                composite -blend $alpha -gravity center $wallpaperPath/$i.jpg $wallpaperPath/8.jpg $cachePathAnimate/$i/$c.png
+            done
+            continue
+        fi
+
+        next=$(( $i - 1 ))
+        while [ $alpha -le 100 ]; do
+            alpha=$(( alpha + 5 ))
+            c=$(( c + 1 ))
+            composite -blend $alpha -gravity center $wallpaperPath/$i.jpg $wallpaperPath/$next.jpg $cachePathAnimate/$i/$c.png
+        done
+    done
+}
+
+animate_wallpaper(){
+    cachePathAnimate="$cachePath/sunpaper"
+    directory="$image"
+    files=$(ls -1 $cachePathAnimate/$directory | wc -l)
+    for i in $(seq $files); do
+        setwallpaper -m "$wallpaperMode" "$cachePathAnimate/$directory/$i.png" &
+        sleep 0.05
+    done
+}
+
 exec_oguri(){
 
     #Check if oguri socket is already running
@@ -742,13 +814,25 @@ while :; do
         -w|--waybar) 
             waybarmode_enable="true"
             shift
-                ;;
+        ;;
         -d|--daemon) 
             daemon_enable="true"
-                ;;
+            shift
+        ;;
         -k|--kill) 
             pkill_daemon
             exit
+        ;;
+        -m|--make) 
+            cache_transitions
+            exit
+        ;;
+        -a|--animate) 
+         if [ "$2" ]; then
+            image=$2
+            animate_wallpaper
+            exit
+        fi         
         ;;
         *) break
     esac
