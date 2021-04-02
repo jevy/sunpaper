@@ -675,22 +675,19 @@ cache_transitions() {
     # -a (1-8) to test animation
  
     #TODO: Because of the time it takes to generate the initial images (5+ min)
-    # maybe cache generation script should be external and run in background? maybe it doesn't matter?
-    #TODO: The call to animate wallpaper will need to gracefully handle situations where
-    # cache_transitions hasn't finished yet.
+    # maybe cache generation script should be external and run in background?
+    # maybe as a manual only flag call?
+    # 
+    # if it's automatic, the call to animate wallpaper will need to gracefully 
+    # handle situations where cache_transitions hasn't finished yet because the 
+    # daemon will be faster than cache_transition result
 
-
-    #TODO: additionally name these by theme name so unique cache folder for each theme
-    # extract theme name from $wallpaperPath
-    cachePathAnimate="$cachePath/sunpaper"
-
-    if [ ! -d $cachePathAnimate ]; then
-        mkdir $cachePathAnimate
-    fi
+    themeName=$(basename $wallpaperPath)
+    cachePathAnimate="$cachePath/sunpaper/$themeName"
 
     for i in {1..8}; do
         if [ ! -d $cachePathAnimate/$i ]; then
-            mkdir $cachePathAnimate/$i
+            mkdir -p $cachePathAnimate/$i
         fi
 
         alpha=0
