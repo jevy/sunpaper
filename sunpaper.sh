@@ -487,6 +487,7 @@ setpaper_construct(){
         #TODO: Add some checks to the if above:
         # --Cache exists (if we call create cache here it will cause a long delay. We'll need to create it earlier)
         # --Moon/Weather mode not on (I don't think we want to create massive cache for all the weather moon combos)
+        # --look for -t time testing flag (unexpected results for animations out of sequence)
 
         animate_wallpaper
 
@@ -682,6 +683,11 @@ cache_transitions() {
     #TODO: additionally name these by theme name so unique cache folder for each theme
     # extract theme name from $wallpaperPath
     cachePathAnimate="$cachePath/sunpaper"
+
+    if [ ! -d $cachePathAnimate ]; then
+        mkdir $cachePathAnimate
+    fi
+
     for i in {1..8}; do
         if [ ! -d $cachePathAnimate/$i ]; then
             mkdir $cachePathAnimate/$i
@@ -693,7 +699,7 @@ cache_transitions() {
             while [ $alpha -le 100 ]; do
                 alpha=$(( alpha + 5 ))
                 c=$(( c + 1 ))
-                composite -blend $alpha -gravity center $wallpaperPath/$i.jpg $wallpaperPath/8.jpg $cachePathAnimate/$i/$c.png
+                composite -blend $alpha -gravity center $wallpaperPath/$i.jpg $wallpaperPath/8.jpg $cachePathAnimate/$i/$c.jpg
             done
             continue
         fi
@@ -702,7 +708,7 @@ cache_transitions() {
         while [ $alpha -le 100 ]; do
             alpha=$(( alpha + 5 ))
             c=$(( c + 1 ))
-            composite -blend $alpha -gravity center $wallpaperPath/$i.jpg $wallpaperPath/$next.jpg $cachePathAnimate/$i/$c.png
+            composite -blend $alpha -gravity center $wallpaperPath/$i.jpg $wallpaperPath/$next.jpg $cachePathAnimate/$i/$c.jpg
         done
     done
 }
@@ -712,8 +718,10 @@ animate_wallpaper(){
     directory="$image"
     files=$(ls -1 $cachePathAnimate/$directory | wc -l)
     for i in $(seq $files); do
-        setwallpaper -m "$wallpaperMode" "$cachePathAnimate/$directory/$i.png" &
-        sleep 0.05
+        setwallpaper -m "$wallpaperMode" "$cachePathAnimate/$directory/$i.jpg" &
+        #sleep 0.05
+        sleep 0.1
+        #sleep 0.5
     done
 }
 
